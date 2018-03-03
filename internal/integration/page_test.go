@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -18,6 +19,7 @@ func testPage(browserName string, newPage pageFunc) {
 		var (
 			page   *agouti.Page
 			server *httptest.Server
+			domain string
 		)
 
 		BeforeEach(func() {
@@ -32,6 +34,10 @@ func testPage(browserName string, newPage pageFunc) {
 
 			Expect(page.Size(640, 480)).To(Succeed())
 			Expect(page.Navigate(server.URL)).To(Succeed())
+
+			u, err := url.Parse(server.URL)
+			Expect(err).NotTo(HaveOccurred())
+			domain = u.Hostname()
 		})
 
 		AfterEach(func() {
@@ -179,7 +185,7 @@ func testPage(browserName string, newPage pageFunc) {
 		}
 
 		It("should support manipulating and retrieving cookies", func() {
-			Expect(page.SetCookie(&http.Cookie{Name: "webdriver-test-cookie", Value: "webdriver value"})).To(Succeed())
+			Expect(page.SetCookie(&http.Cookie{Name: "webdriver-test-cookie", Value: "webdriver value", Domain: domain})).To(Succeed())
 			cookies, err := page.GetCookies()
 			Expect(err).NotTo(HaveOccurred())
 			cookieNames := []string{cookies[0].Name, cookies[1].Name}
@@ -191,7 +197,7 @@ func testPage(browserName string, newPage pageFunc) {
 		})
 
 		It("should support resetting the page", func() {
-			Expect(page.SetCookie(&http.Cookie{Name: "webdriver-test-cookie", Value: "webdriver value"})).To(Succeed())
+			Expect(page.SetCookie(&http.Cookie{Name: "webdriver-test-cookie", Value: "webdriver value", Domain: domain})).To(Succeed())
 			Expect(page.GetCookies()).To(HaveLen(2))
 
 			Expect(page.RunScript("localStorage.setItem('some-local-storage-key', 'some-local-storage-value');", nil, nil)).To(Succeed())
